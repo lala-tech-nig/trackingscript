@@ -6,7 +6,13 @@ const app = express();
 
 
 // Enable CORS for all origins
-app.use(cors());
+app.use(
+    cors({
+      origin: "https://trackingscriptfront.vercel.app", // Replace with your frontend domain
+      methods: ["GET", "POST"], // Allow specific HTTP methods
+      allowedHeaders: ["Content-Type"] // Allow specific headers
+    })
+  );
 
 
 app.use(express.json());
